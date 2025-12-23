@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 // Global variable for the input file path relative to the day directory
@@ -55,12 +55,12 @@ func readInput(filename string) ([]string, error) {
 // solvePart1 contains the logic for the first part of the puzzle.
 func solvePart1(lines []string) int {
 	total := 0
-	operatorLine := lines[len(lines) - 1]
+	operatorLine := lines[len(lines)-1]
 	operators := strings.Fields(operatorLine)
 	size := len(operators)
 	fig := []int{}
 
-	for i := 0; i < len(lines) - 1; i++ {
+	for i := 0; i < len(lines)-1; i++ {
 		var digits []string = strings.Fields(lines[i])
 		for j := 0; j < len(digits); j++ {
 			res, _ := strconv.Atoi(digits[j])
@@ -69,10 +69,10 @@ func solvePart1(lines []string) int {
 	}
 	for i := 0; i < size; i++ {
 		if operators[i] == "+" {
-			total += fig[i] + fig[i + size] + fig[i + 2 * size] + fig[i + 3 * size]
+			total += fig[i] + fig[i+size] + fig[i+2*size] + fig[i+3*size]
 
 		} else if operators[i] == "*" {
-			total += fig[i] * fig[i + size] * fig[i + 2 * size] * fig[i + 3 * size]
+			total += fig[i] * fig[i+size] * fig[i+2*size] * fig[i+3*size]
 		}
 	}
 	return total
@@ -82,9 +82,35 @@ func solvePart1(lines []string) int {
 // It often builds upon or modifies the logic from Part 1.
 func solvePart2(lines []string) int {
 	total := 0
-	operatorLine := lines[len(lines) - 1]
-	colFigLen := []int{}
+	var digits []int
+	for i := len(lines[0]) - 1; i >= 0; i-- {
+		var digitRune []byte
+		for j := 0; j < 4; j++ {
+			if lines[j][i] != ' ' {
+				digitRune = append(digitRune, lines[j][i])
+			}
+		}
+		res, _ := strconv.Atoi(string(digitRune))
+		digits = append(digits, res)
+		if lines[4][i] == '+' {
+			sum := 0
+			for _, val := range digits {
+				sum += val
+			}
+			total += sum
+			fmt.Printf("i: %d, digit: %d\n", i, sum)
+			i--
+			digits = digits[:0]
+		} else if lines[4][i] == '*' {
+			prod := 1
+			for _, val := range digits {
+				prod *= val
+			}
+			total += prod
+			fmt.Printf("i: %d, digit: %d\n", i, prod)
+			i--
+			digits = digits[:0]
+		}
+	}
 	return total
 }
-
-
