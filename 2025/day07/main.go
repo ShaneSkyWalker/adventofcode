@@ -7,7 +7,7 @@ import (
 )
 
 // Global variable for the input file path relative to the day directory
-const inputFile = "input2.txt"
+const inputFile = "input.txt"
 
 func main() {
 	// Read input and handle potential errors
@@ -93,49 +93,32 @@ type BeamKey struct {
 }
 func solvePart2(lines []string) int {
 	total := 0
-	beamMap := make(map[BeamKey]*Beam)
+	beams := make(map[int]int)
 	for i := 0; i < len(lines[0]); i++ {
 		if lines[0][i] == 'S' {
-			beam := &Beam{1, i, 1}
-			beamMap[BeamKey{beam.x, beam.y}] = beam
+			beams[i] = 1
 		}
 	}
 	for i := 2; i < len(lines); i++ {
 		for j := 0; j < len(lines[0]); j++ {
-			if lines[i][j] == '^' {
-				// fmt.Println(beamMap)
-				if beam, exists := beamMap[BeamKey{i-1, j}]; exists {
-					//fmt.Printf("beam:%v", beamMap)
-					leftBeam := &Beam{}
-					rightBeam := &Beam{}
-					if curBeam, subExists := beamMap[BeamKey{i, j-1}]; subExists {
-						leftBeam = &Beam{i, j-1, beam.rep + curBeam.rep}
-						delete(beamMap, BeamKey{i, j-1})
-					} else {
-						leftBeam = &Beam{i, j-1, beam.rep}
-					}
-					if curBeam, subExists := beamMap[BeamKey{i, j+1}]; subExists {
-						rightBeam = &Beam{i, j+1, beam.rep + curBeam.rep}
-						delete(beamMap, BeamKey{i, j+1})
-					} else {
-						rightBeam = &Beam{i, j+1, beam.rep}
-					}
-					beamMap[BeamKey{i, j-1}] = leftBeam
-					beamMap[BeamKey{i, j+1}] = rightBeam
-					fmt.Printf("%v\n", leftBeam)
-					fmt.Printf("%v\n", rightBeam)
+			if lines[i][j] == '^' && beams[j] > 0 {
+				if beams[j-1] > 0 {
+					beams[j-1] += beams[j]
+				} else {
+					beams[j-1] = beams[j]
 				}
-			} else {
-				if beam, exists := beamMap[BeamKey{i-1, j}]; exists {
-					beamMap[BeamKey{i, j}] = &Beam{i, j, beam.rep}
+				if beams[j+1] > 0 {
+					beams[j+1] += beams[j]
+				} else {
+					beams[j+1] = beams[j]
 				}
-			}
+				beams[j] = 0
+			} 
 		}
+		fmt.Printf("%v\n", beams)
 	}
-	for j := 0; j < len(lines[0]); j++ {
-		if beam, exists := beamMap[BeamKey{len(lines) - 1, j}]; exists {
-			total += beam.rep
-		}
+	for _, v := range beams {
+		total += v
 	}
 	return total
 }
