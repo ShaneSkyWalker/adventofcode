@@ -83,14 +83,7 @@ func solvePart1(lines []string) int {
 // solvePart2 contains the logic for the second part of the puzzle.
 // It often builds upon or modifies the logic from Part 1.
 //
-type Beam struct {
-	x int
-	y int
-	rep int
-}
-type BeamKey struct {
-	x, y int
-}
+
 func solvePart2(lines []string) int {
 	total := 0
 	beams := make(map[int]int)
