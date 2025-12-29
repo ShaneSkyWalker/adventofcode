@@ -121,7 +121,7 @@ func solvePart1(lines []string) int {
 
 	for k := 0; k < limit; k++ {
         c := connections[k]
-		fmt.Printf("%v\n", size)
+		// fmt.Printf("%v\n", size)
         union(c.a, c.b)
     }
 	var finalSizes []int
@@ -131,10 +131,10 @@ func solvePart1(lines []string) int {
         }
     }
 	sort.Sort(sort.Reverse(sort.IntSlice(finalSizes)))
-	fmt.Printf("size0: %d, size1: %d, size2: %d", finalSizes[0], finalSizes[1], finalSizes[2])
-	fmt.Printf("find: %v", find)
-	fmt.Printf("size: %v", size)
-	fmt.Printf("finalsize: %v", finalSizes)
+	// fmt.Printf("size0: %d, size1: %d, size2: %d", finalSizes[0], finalSizes[1], finalSizes[2])
+	// fmt.Printf("find: %v", find)
+	// fmt.Printf("size: %v", size)
+	// fmt.Printf("finalsize: %v", finalSizes)
 
 	total := finalSizes[0] * finalSizes[1] * finalSizes[2]
 	return total
@@ -145,7 +145,83 @@ func solvePart1(lines []string) int {
 //
 
 func solvePart2(lines []string) int {
-	total := 0
-	return total
+	var connections []Connection
+	for i := 0; i < len(lines); i++ {
+		dims := strings.Split(lines[i], ",")
+		val0, _ := strconv.ParseFloat(strings.TrimSpace(dims[0]), 64)
+		val1, _ := strconv.ParseFloat(strings.TrimSpace(dims[1]), 64)
+		val2, _ := strconv.ParseFloat(strings.TrimSpace(dims[2]), 64)
+		for j := i + 1; j < len(lines); j++ {
+			dims2 := strings.Split(lines[j], ",")
+			val3, _ := strconv.ParseFloat(strings.TrimSpace(dims2[0]), 64)
+			val4, _ := strconv.ParseFloat(strings.TrimSpace(dims2[1]), 64)
+			val5, _ := strconv.ParseFloat(strings.TrimSpace(dims2[2]), 64)
+
+			square := math.Pow(val0 - val3, 2) + math.Pow(val1 - val4, 2) + math.Pow(val2 - val5, 2)
+			connections = append(connections, Connection{i, j, square})
+		}
+	}
+
+	// sort
+	sort.Slice(connections, func(i, j int) bool {
+		return connections[i].dist < connections[j].dist
+	})
+
+	// Initialize DSU (Union-Find)
+	parent := make([]int, len(lines))
+	size := make([]int, len(lines))
+	for i := range parent {
+		parent[i] = i
+		size[i] = 1
+	}
+
+	numCircuits := len(lines) // Start with every box as its own circuit
+
+	// Helper functions for DSU
+	var find func(int) int
+	find = func(i int) int {
+		if parent[i] == i {
+			return i
+		}
+		parent[i] = find(parent[i])
+		return parent[i]
+	}
+	
+	union := func(i, j int) {
+        rootI, rootJ := find(i), find(j)
+        if rootI != rootJ {
+            // Merge smaller into larger
+            if size[rootI] < size[rootJ] {
+                rootI, rootJ = rootJ, rootI
+            }
+            parent[rootJ] = rootI
+            size[rootI] += size[rootJ]
+            size[rootJ] = 0 // Optional: reset size of the merged-away root
+        }
+    }
+
+
+	fmt.Println(len(connections))
+	for k := 0; k < len(connections); k++ {
+        c := connections[k]
+		rootA := find(c.a)
+		rootB := find(c.b)
+		
+		if rootA != rootB {
+			union(rootA, rootB)
+			numCircuits--
+
+
+			if numCircuits == 1{
+				dims := strings.Split(lines[c.a], ",")
+				vala, _ := strconv.ParseFloat(strings.TrimSpace(dims[0]), 64)
+				dims = strings.Split(lines[c.b], ",")
+				valb, _ := strconv.ParseFloat(strings.TrimSpace(dims[0]), 64)
+				return int(vala * valb)
+			}
+		}
+    }
+	
+	return 0
 }
 
