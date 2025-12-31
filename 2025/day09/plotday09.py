@@ -1,4 +1,13 @@
-97924,50345
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "matplotlib>=3.10.8",
+# ]
+# ///
+import matplotlib.pyplot as plt
+
+# The raw data provided
+data_str = """97924,50345
 97924,51571
 98267,51571
 98267,52762
@@ -493,4 +502,30 @@
 98058,47910
 98058,49129
 98032,49129
-98032,50345
+98032,50345"""
+
+x = []
+y = []
+
+# Parse the coordinates
+for line in data_str.strip().split("\n"):
+    coords = line.split(",")
+    if len(coords) == 2:
+        x.append(int(coords[0]))
+        y.append(int(coords[1]))
+
+# Ensure the loop is closed for the plot
+if x[0] != x[-1] or y[0] != y[-1]:
+    x.append(x[0])
+    y.append(y[0])
+
+# Create the plot
+plt.plot(x, y, marker='o', markersize=1, linestyle='-', linewidth=1, color='blue')
+plt.title("Outline of the Provided Coordinates")
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.grid(True)
+plt.gca().set_aspect('equal', adjustable='box')
+
+# Save and display
+plt.savefig("dots_plot.png")

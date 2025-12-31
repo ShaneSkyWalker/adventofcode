@@ -7,6 +7,7 @@ import (
 	"strings"
 	"strconv"
 	"sort"
+	"math"
 )
 
 // Global variable for the input file path relative to the day directory
@@ -72,18 +73,9 @@ func solvePart1(lines []string) int {
 	pairs := []Pairs{}
 	for i := 0; i < len(dots); i++ {
 		for j := i + 1; j < len(dots); j++ {
-			xDist, yDist := 0, 0
-			if dots[i].x > dots[j].x {
-				xDist = dots[i].x - dots[j].x + 1
-			} else {
-				xDist = dots[j].x - dots[i].x + 1
-			}
-			if dots[i].y > dots[j].y {
-				yDist = dots[i].y - dots[j].y + 1
-			} else {
-				yDist = dots[j].y - dots[i].y + 1
-			}
-			pair := Pairs{i, j, xDist * yDist}
+			xDist := math.Abs(float64(dots[i].x - dots[j].x)) + 1
+			yDist := math.Abs(float64(dots[i].y - dots[j].y)) + 1
+			pair := Pairs{i, j, int(xDist * yDist)}
 			pairs = append(pairs, pair)
 		}
 	}
@@ -100,40 +92,111 @@ func solvePart1(lines []string) int {
 // compression + flood fill?
 // ray casting
 // green theorem
-func solvePart2(lines []string) int {
-	dots := []Dots{}
+
+type Point struct {
+	X, Y int
+}
+
+type Edge struct {
+	P1, P2 Point
+}
+
+func solvePart2(lines []string) int64 {
+	points := []Point{}
 	for _, line := range lines {
 		coords := strings.Split(line, ",")
 		x, _ := strconv.Atoi(strings.TrimSpace(coords[0]))
 		y, _ := strconv.Atoi(strings.TrimSpace(coords[1]))
-		dots = append(dots, Dots{x, y})
+		points = append(points, Point{x, y})
 	}
-	pairs := []Pairs{}
-	for i := 0; i < len(dots); i++ {
-		for j := i + 1; j < len(dots); j++ {
-			xDist, yDist := 0, 0
-			if dots[i].x > dots[j].x {
-				xDist = dots[i].x - dots[j].x + 1
-			} else {
-				xDist = dots[j].x - dots[i].x + 1
+
+	n := len(points)
+	edges := make([]Edge, n)
+	for i := 0; i < n; i++ {
+		edges[i] = Edge{points[i], points[(i+1)%n]}
+	}
+
+	var maxArea int64 = 0
+
+	// Iterate through every pair of red tiles as opposite corners
+	for i := 0; i < n; i++ {
+		for j := i + 1; j < n; j++ {
+			p1, p2 := points[i], points[j]
+
+			xmin, xmax := min(p1.X, p2.X), max(p1.X, p2.X)
+			ymin, ymax := min(p1.Y, p2.Y), max(p1.Y, p2.Y)
+
+			width := int64(xmax - xmin) + 1
+			height := int64(ymax - ymin) + 1
+			area := width * height
+
+			if area <= maxArea || width == 0 || height == 0 {
+				continue
 			}
-			if dots[i].y > dots[j].y {
-				yDist = dots[i].y - dots[j].y + 1
-			} else {
-				yDist = dots[j].y - dots[i].y + 1
+
+			// 1. Midpoint Check (Ray Casting)
+			midX := float64(xmin+xmax) / 2.0
+			midY := float64(ymin+ymax) / 2.0
+
+			if isInside(midX, midY, edges) {
+				// 2. Slicing Check (Ensure no walls pass through the rectangle)
+				if !isSliced(xmin, xmax, ymin, ymax, edges) {
+					maxArea = area
+				}
 			}
-			pair := Pairs{i, j, xDist * yDist}
-			pairs = append(pairs, pair)
 		}
 	}
-	// fmt.Println(pairs)
-	sort.Slice(pairs, func(i, j int) bool {
-		return pairs[i].dist < pairs[j].dist
-	})
-	for i, _ range pairs {
-		pairs[i]
-	}
-	return pairs[len(pairs) - 1].dist
-	return 0
+	return maxArea
 }
 
+// isInside uses the Ray Casting algorithm to check if a point is within the polygon
+func isInside(x, y float64, edges []Edge) bool {
+	inside := false
+	for _, e := range edges {
+		y1, y2 := float64(e.P1.Y), float64(e.P2.Y)
+		x1, x2 := float64(e.P1.X), float64(e.P2.X)
+
+		if (y1 > y) != (y2 > y) {
+			intersectX := (x2-x1)*(y-y1)/(y2-y1) + x1
+			if x < intersectX {
+				inside = !inside
+			}
+		}
+	}
+	return inside
+}
+
+// isSliced checks if any vertical or horizontal polygon edge cuts the rectangle interior
+func isSliced(xmin, xmax, ymin, ymax int, edges []Edge) bool {
+	for _, e := range edges {
+		exMin, exMax := min(e.P1.X, e.P2.X), max(e.P1.X, e.P2.X)
+		eyMin, eyMax := min(e.P1.Y, e.P2.Y), max(e.P1.Y, e.P2.Y)
+
+		if e.P1.X == e.P2.X { // Vertical Edge
+			if e.P1.X > xmin && e.P1.X < xmax {
+				// Check if Y-ranges overlap
+				if max(ymin, eyMin) < min(ymax, eyMax) {
+					return true
+				}
+			}
+		} else { // Horizontal Edge
+			if e.P1.Y > ymin && e.P1.Y < ymax {
+				// Check if X-ranges overlap
+				if max(xmin, exMin) < min(xmax, exMax) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func min(a, b int) int {
+	if a < b { return a }
+	return b
+}
+
+func max(a, b int) int {
+	if a > b { return a }
+	return b
+}
