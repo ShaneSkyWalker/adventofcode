@@ -6,12 +6,13 @@ import (
 	"os"
 	"strings"
 	"strconv"
+	"regexp"
 	// "sort"
 	// "math"
 )
 
 // Global variable for the input file path relative to the day directory
-const inputFile = "input.txt"
+const inputFile = "input2.txt"
 
 func main() {
 	// Read input and handle potential errors
@@ -123,5 +124,50 @@ func solvePart1(lines []string) int {
 // solvePart2 contains the logic for the second part of the puzzle.
 // It often builds upon or modifies the logic from Part 1.
 func solvePart2(lines []string) int {
-	return 0
+	total := 0
+	for _, line := range lines {
+		reButtons := regexp.MustCompile(`\((.*?)\)`)
+		reTarget := regexp.MustCompile(`\{(.*?)\}`)
+
+		buttonMatches := reButtons.FindAllStringSubmatch(line, -1)
+		targetMatch := reTarget.FindStringSubmatch(line)
+
+		targetStr := strings.Split(targetMatch[1], ",")
+		rows := len(targetStr)
+		targets := make([]int, rows)
+		for i, s := range targetStr {
+			targets[i], _ = strconv.Atoi(strings.TrimSpace(s))
+		}
+
+		cols := len(buttonMatches) + 1
+
+		matrix := make([][]int, rows)
+		for i := range matrix {
+			matrix[i] = make([]int, cols)
+			matrix[i][cols-1] = targets[i]
+		}
+
+		for bIdx, match := range buttonMatches {
+			affectedStr := strings.Split(match[1], ",")
+			// fmt.Printf("%v\n", affectedStr)
+			for _, s := range affectedStr {
+				s = strings.TrimSpace(s)
+				if s == "" { continue }
+				cIdx, _ := strconv.Atoi(s)
+				if cIdx < rows {
+					matrix[cIdx][bIdx] = 1
+				}
+			}
+		}
+		// fmt.Printf("%v", matrix)
+	
+		// [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+		// 0 0 0 0 1 1
+		// 0 1 0 0 0 1
+		// 0 0 1 1 1 0
+		// 1 1 0 1 0 0
+
+		
+	}
+	return total
 }
