@@ -131,6 +131,7 @@ func solvePart2(lines []string) int {
 
 		buttonMatches := reButtons.FindAllStringSubmatch(line, -1)
 		targetMatch := reTarget.FindStringSubmatch(line)
+		// fmt.Println(targetMatch[1])
 
 		targetStr := strings.Split(targetMatch[1], ",")
 		rows := len(targetStr)
@@ -141,10 +142,10 @@ func solvePart2(lines []string) int {
 
 		cols := len(buttonMatches) + 1
 
-		matrix := make([][]int, rows)
+		matrix := make([][]float64, rows)
 		for i := range matrix {
-			matrix[i] = make([]int, cols)
-			matrix[i][cols-1] = targets[i]
+			matrix[i] = make([]float64, cols)
+			matrix[i][cols-1] = float64(targets[i])
 		}
 
 		for bIdx, match := range buttonMatches {
@@ -155,19 +156,34 @@ func solvePart2(lines []string) int {
 				if s == "" { continue }
 				cIdx, _ := strconv.Atoi(s)
 				if cIdx < rows {
-					matrix[cIdx][bIdx] = 1
+					matrix[cIdx][bIdx] = float64(1)
 				}
 			}
 		}
-		// fmt.Printf("%v", matrix)
-	
-		// [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
-		// 0 0 0 0 1 1
-		// 0 1 0 0 0 1
-		// 0 0 1 1 1 0
-		// 1 1 0 1 0 0
+		fmt.Printf("%v\n", matrix)
 
-		
+		pivotRow := 0
+		pivotCols := make([]float64, 0)
+		for j := 0; j < cols - 1 && pivotRow < rows; j++ {
+			sel := pivotRow
+			for i := pivotRow; i < rows; i++ {
+				if math.Abs(matrix[i][j]) > math.Abs(matrix[sel][j]) {
+					sel = i
+				}
+			}
+			if math.Abs(matrix[sel][j]) < 1e-9 {
+				// ==0
+				continue
+			}
+			matrix[pivotRow], matrix[sel] = matrix[sel], matrix[pivotRow]
+			pivotCols = append(pivotCols, i)
+
+			divisor := matrix[pivotRow][j]
+			for k := j; k < cols; k++ {
+				matrix[pivotRow][k] /= divisor
+			}
+
+		}
 	}
 	return total
 }
