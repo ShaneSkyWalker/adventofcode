@@ -17,7 +17,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("--- Advent of Code 2025 - Day 04 ---")
+	fmt.Println("--- Advent of Code 2025 - Day 07 ---")
 
 	// Execute Part 1
 	result1 := solvePart1(lines)

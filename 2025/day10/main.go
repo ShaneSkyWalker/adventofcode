@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"regexp"
 	// "sort"
-	// "math"
+	"math"
 )
 
 // Global variable for the input file path relative to the day directory
-const inputFile = "input2.txt"
+const inputFile = "input.txt"
 
 func main() {
 	// Read input and handle potential errors
@@ -123,6 +123,8 @@ func solvePart1(lines []string) int {
 
 // solvePart2 contains the logic for the second part of the puzzle.
 // It often builds upon or modifies the logic from Part 1.
+
+var minPresses int
 func solvePart2(lines []string) int {
 	total := 0
 	for _, line := range lines {
@@ -160,10 +162,10 @@ func solvePart2(lines []string) int {
 				}
 			}
 		}
-		fmt.Printf("%v\n", matrix)
+		// fmt.Printf("%v\n", matrix)
 
 		pivotRow := 0
-		pivotCols := make([]float64, 0)
+		pivotCols := make([]int, 0)
 		for j := 0; j < cols - 1 && pivotRow < rows; j++ {
 			sel := pivotRow
 			for i := pivotRow; i < rows; i++ {
@@ -176,14 +178,94 @@ func solvePart2(lines []string) int {
 				continue
 			}
 			matrix[pivotRow], matrix[sel] = matrix[sel], matrix[pivotRow]
-			pivotCols = append(pivotCols, i)
+			pivotCols = append(pivotCols, j)
 
 			divisor := matrix[pivotRow][j]
 			for k := j; k < cols; k++ {
 				matrix[pivotRow][k] /= divisor
 			}
 
+			for i := 0; i < rows; i++ {
+				if i != pivotRow {
+					factor := matrix[i][j]
+					for k := j; k < cols; k++ {
+						matrix[i][k] -= factor * matrix[pivotRow][k]
+					}
+				}
+			}
+			pivotRow++
+
 		}
+
+		isPivot := make(map[int]bool)
+		for _, c := range pivotCols {
+			isPivot[c] = true
+		}
+		freeVars := make([]int, 0)
+		for j := 0; j < cols - 1; j++ {
+			if !isPivot[j] {
+				freeVars = append(freeVars, j)
+			}
+		}
+
+		// fmt.Printf("Main: %v, freeVars: %v\n", pivotCols, freeVars)
+		// fmt.Println(matrix)
+		
+		minPresses = math.MaxInt32
+		freeVals := make([]int, len(freeVars))
+
+		backtrack(0, freeVals, freeVars, pivotCols, matrix, cols)
+		if minPresses == math.MaxInt32 {
+			minPresses = 0
+			fmt.Printf("%v\n", matrix)
+			fmt.Printf("%s\n", line)
+		}
+		total += minPresses
 	}
 	return total
+}
+
+func backtrack(idx int, freeVals []int, freeVars []int, 
+	pivotCols []int, mat [][]float64, totalCols int) {
+
+	if idx == len(freeVars) {
+		checkSolution(freeVals, freeVars, pivotCols, mat, totalCols)
+		return
+	}
+
+	for v := 0; v <= 200; v++ {
+		// issue with this number. Bigger the better
+		freeVals[idx] = v
+		backtrack(idx+1, freeVals, freeVars, pivotCols, mat, totalCols)
+	}
+}
+
+func checkSolution(freeVals []int, freeVars []int, pivotCols []int, 
+	mat [][]float64, totalCols int) {
+
+	currentSum := 0
+	for _, v := range freeVals {
+		currentSum += v
+	}
+
+	if currentSum > minPresses {
+		return
+	}
+
+	for i, _ := range pivotCols {
+		val := mat[i][totalCols-1]
+		for fIdx, fCol := range freeVars {
+			val -= mat[i][fCol] * float64(freeVals[fIdx])
+		}
+
+		rounded := math.Round(val)
+		if val < -1e-9 || math.Abs(val-rounded) > 1e-9 {
+			return
+		}
+		currentSum += int(rounded)
+	}
+
+	if currentSum < minPresses {
+		minPresses = currentSum
+	}
 }
