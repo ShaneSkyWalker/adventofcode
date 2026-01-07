@@ -144,6 +144,7 @@ func solvePart2(lines []string) int {
 
 		cols := len(buttonMatches) + 1
 
+		// 1. Convert to float64 for RREF
 		matrix := make([][]float64, rows)
 		for i := range matrix {
 			matrix[i] = make([]float64, cols)
@@ -164,6 +165,7 @@ func solvePart2(lines []string) int {
 		}
 		// fmt.Printf("%v\n", matrix)
 
+		// 2. Perform Gauss-Jordan Elimination (RREF)
 		pivotRow := 0
 		pivotCols := make([]int, 0)
 		for j := 0; j < cols - 1 && pivotRow < rows; j++ {
@@ -201,6 +203,7 @@ func solvePart2(lines []string) int {
 		for _, c := range pivotCols {
 			isPivot[c] = true
 		}
+		// 3. Identify Free Variables
 		freeVars := make([]int, 0)
 		for j := 0; j < cols - 1; j++ {
 			if !isPivot[j] {
@@ -214,6 +217,7 @@ func solvePart2(lines []string) int {
 		minPresses = math.MaxInt32
 		freeVals := make([]int, len(freeVars))
 
+		// Recurssion or Dijkstra Search
 		backtrack(0, freeVals, freeVars, pivotCols, matrix, cols)
 		if minPresses == math.MaxInt32 {
 			minPresses = 0
