@@ -87,58 +87,40 @@ func solvePart1(lines []string) int {
 
 // solvePart2 contains the logic for the second part of the puzzle.
 // It often builds upon or modifies the logic from Part 1.
-
+// should use backtracking.
 func solvePart2(lines []string) int {
-	devices := make(map[string]int)
-	total := 0
+	deviceMap := make(map[string][]string)
+	for _, line := range lines {
+		match := strings.Split(line, ":")
+		targets := strings.Split(strings.TrimSpace(match[1]), " ")
+		deviceMap[match[0]] = targets
+	}
+	currentPath := make(map[string]int)
 
-
-	// 2. Setup Memoization
-	// Key: "nodeName-hasFFT-hasDAC"
-	memo := make(map[string]int)
-
-	var search func(device string, is_fft, is_dac bool)
-	search = func(device string, is_fft, is_dac bool) {
-		var match []string
-		if value, ok := devices[device]; ok {
-			line := lines[value]
-			match = strings.Split(line, ":")
-			return
-		} else {
-			for i, line := range lines {
-				match = strings.Split(line, ":")
-				if match[0] == device {
-					devices[match[0]] = i
-					break
-				}
-			}
-		}
-		subDevices := strings.Split(strings.Trim(match[1], " "), " ")
-		// fmt.Println(subDevices)
-		for _, subDevice := range subDevices {
-			if subDevice == "out" {
-				if is_fft && is_dac {
-					total += 1
-				}
-				return
-			}
-			if match[0] == "fft" {
-				is_fft = true
-			}
-			if match[0] == "dac" {
-				is_dac = true
-			}
-			search(subDevice, is_fft, is_dac)
+	var search func(device string, is_fft, is_dac bool) int
+	search = func(device string, is_fft, is_dac bool) int {
+		devicePath := fmt.Sprintf("%v-%v-%v", device, is_fft, is_dac)
+		if _, ok := currentPath[devicePath]; ok {
+			return currentPath[devicePath]
 		}
 
-		stateKey := fmt.Sprintf("%s-%t-%t", device, is_fft, is_dac)
-		if _, exists := memo[stateKey]; exists {
-			return
-		}
+		if device == "fft" { is_fft = true }
+		if device == "dac" { is_dac = true }
+		// fmt.Println(device, is_fft, is_dac)
 
-		memo[stateKey] = 1
+		totalPaths := 0
+		if device == "out" {
+			if is_fft && is_dac {
+				return 1
+			}
+			return 0
+		}
+		for _, subDevice := range deviceMap[device] {
+			totalPaths += search(subDevice, is_fft, is_dac)
+		}
+		currentPath[devicePath] = totalPaths
+		return totalPaths
 		
 	}
-	search("svr", false, false)
-	return total
+	return search("svr", false, false)
 }
