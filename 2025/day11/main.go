@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"strconv"
-	"regexp"
+	// "strconv"
+	// "regexp"
 	// "sort"
 )
 
@@ -55,12 +55,90 @@ func readInput(filename string) ([]string, error) {
 }
 // solvePart1 contains the logic for the first part of the puzzle.
 func solvePart1(lines []string) int {
-	return 0
+	devices := make(map[string]int)
+	total := 0
+	var search func(device string)
+	search = func(device string) {
+		var match []string
+		if value, ok := devices[device]; ok {
+			line := lines[value]
+			match = strings.Split(line, ":")
+		} else {
+			for i, line := range lines {
+				match = strings.Split(line, ":")
+				if match[0] == device {
+					devices[match[0]] = i
+					break
+				}
+			}
+		}
+		subDevices := strings.Split(strings.Trim(match[1], " "), " ")
+		for _, subDevice := range subDevices {
+			if subDevice == "out" {
+				total += 1
+				return
+			}
+			search(subDevice)
+		}
+	}
+	search("you")
+	return total
 }
 
 // solvePart2 contains the logic for the second part of the puzzle.
 // It often builds upon or modifies the logic from Part 1.
 
 func solvePart2(lines []string) int {
-	return 0
+	devices := make(map[string]int)
+	total := 0
+
+
+	// 2. Setup Memoization
+	// Key: "nodeName-hasFFT-hasDAC"
+	memo := make(map[string]int)
+
+	var search func(device string, is_fft, is_dac bool)
+	search = func(device string, is_fft, is_dac bool) {
+		var match []string
+		if value, ok := devices[device]; ok {
+			line := lines[value]
+			match = strings.Split(line, ":")
+			return
+		} else {
+			for i, line := range lines {
+				match = strings.Split(line, ":")
+				if match[0] == device {
+					devices[match[0]] = i
+					break
+				}
+			}
+		}
+		subDevices := strings.Split(strings.Trim(match[1], " "), " ")
+		// fmt.Println(subDevices)
+		for _, subDevice := range subDevices {
+			if subDevice == "out" {
+				if is_fft && is_dac {
+					total += 1
+				}
+				return
+			}
+			if match[0] == "fft" {
+				is_fft = true
+			}
+			if match[0] == "dac" {
+				is_dac = true
+			}
+			search(subDevice, is_fft, is_dac)
+		}
+
+		stateKey := fmt.Sprintf("%s-%t-%t", device, is_fft, is_dac)
+		if _, exists := memo[stateKey]; exists {
+			return
+		}
+
+		memo[stateKey] = 1
+		
+	}
+	search("svr", false, false)
+	return total
 }
