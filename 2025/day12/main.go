@@ -4,10 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
-	// "strconv"
-	// "regexp"
-	// "sort"
+	"regexp"
+	"strconv"
 )
 
 // Global variable for the input file path relative to the day directory
@@ -53,9 +51,57 @@ func readInput(filename string) ([]string, error) {
 
 	return lines, nil
 }
+
 // solvePart1 contains the logic for the first part of the puzzle.
+type Shape struct {
+	dot int
+}
+
 func solvePart1(lines []string) int {
-	return 0
+	var shapes []Shape
+	total := 0
+	shape := Shape{dot: 0}
+	for i := 0; i < 30; i++ {
+		if len(lines[i]) > 1 && lines[i][1] == byte(':') {
+			shape = Shape{dot: 0}
+			continue
+		}
+		if len(lines[i]) == 0 {
+			shapes = append(shapes, shape)
+			continue
+		}
+		for _, ch := range lines[i] {
+			// fmt.Printf("%v\n", ch)
+			if ch == rune('#') {
+				fmt.Printf("%v\n", ch)
+				shape.dot += 1
+				fmt.Printf("%v\n", shape.dot)
+			}
+		}
+	}
+
+	for i := 30; i < len(lines); i++ {
+		re := regexp.MustCompile(`\d+`)
+		matches := re.FindAllString(lines[i], -1)
+		nums := make([]int, len(matches))
+		for i, s := range matches {
+			num, _ := strconv.Atoi(s)
+			nums[i] = num
+		}
+
+		width := nums[0]
+		height := nums[1]
+		counts := nums[2:]
+		sums := float64(0)
+		for i, count := range counts {
+			sums += float64(count * shapes[i].dot)
+		}
+		if sums/float64(width*height) < 0.8 {
+			total += 1
+		}
+	}
+	fmt.Printf("%v\n", shapes)
+	return total
 }
 
 // solvePart2 contains the logic for the second part of the puzzle.
